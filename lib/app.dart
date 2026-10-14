@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
+import 'screens/game_screen.dart';
 
 /// Widget raíz de la aplicación.
 /// Aquí se configura el tema y la pantalla inicial.
@@ -16,11 +17,7 @@ class App extends StatelessWidget {
       // "system" significa automático: sigue el tema del dispositivo.
       // Más adelante lo controlará la pantalla de Configuración.
       themeMode: ThemeMode.system,
-      home: const Scaffold(
-        body: Center(
-          child: Text('15-Puzzle Flutter'),
-        ),
-      ),
+      home: const GameScreen(size: 4),
     );
   }
 }
