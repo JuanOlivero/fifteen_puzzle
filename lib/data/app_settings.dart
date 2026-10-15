@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 
-/// Dificultad del juego. Cada valor sabe su tamaño de tablero y su nombre,
-/// así no repetimos "3, 4, 5" por toda la app.
+/// Dificultad del juego. Cada valor sabe su tamaño de tablero, su nombre
+/// y su límite de movimientos, así no repetimos estos datos por toda la app.
 enum Difficulty {
-  easy(3, 'Fácil'),
-  medium(4, 'Medio'),
-  hard(5, 'Difícil');
+  easy(3, 'Fácil', 100),
+  medium(4, 'Medio', 250),
+  hard(5, 'Difícil', 500);
 
-  const Difficulty(this.size, this.label);
+  const Difficulty(this.size, this.label, this.maxMoves);
 
   /// Piezas por lado del tablero.
   final int size;
 
   /// Texto que se muestra al usuario.
   final String label;
+
+  /// Movimientos permitidos antes de perder la partida.
+  final int maxMoves;
 }
 
 /// Estilo visual de las piezas.
