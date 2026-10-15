@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../data/app_settings.dart';
+import '../data/scores_repository.dart';
 import '../logic/puzzle_logic.dart';
 import '../widgets/game_over_dialog.dart';
 import '../widgets/puzzle_board.dart';
@@ -8,10 +9,17 @@ import '../widgets/puzzle_board.dart';
 /// Pantalla de la partida. Guarda el estado que cambia mientras se juega:
 /// el tablero, los movimientos y el tiempo. Por eso es un StatefulWidget.
 class GameScreen extends StatefulWidget {
-  const GameScreen({super.key, this.difficulty = Difficulty.medium});
+  const GameScreen({
+    super.key,
+    this.difficulty = Difficulty.medium,
+    required this.scores,
+  });
 
   /// Dificultad elegida: define el tamaño del tablero y el límite de movimientos.
   final Difficulty difficulty;
+
+  /// Donde se guardan los récords de las victorias.
+  final ScoresRepository scores;
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -82,11 +90,21 @@ class _GameScreenState extends State<GameScreen> {
     });
   }
 
-  /// Termina la partida: detiene el cronómetro, muestra el resultado
-  /// y actúa según lo que elija el usuario.
+  /// Termina la partida: detiene el cronómetro, guarda el récord si gana,
+  /// muestra el resultado y actúa según lo que elija el usuario.
   Future<void> _finish({required bool won}) async {
     _timer?.cancel();
     setState(() => _finished = true);
+
+    // Solo las victorias cuentan para los marcadores.
+    final isRecord = won
+        ? await widget.scores.submit(
+            widget.difficulty,
+            seconds: _seconds,
+            moves: _moves,
+          )
+        : false;
+    if (!mounted) return;
 
     final action = await showDialog<GameOverAction>(
       context: context,
@@ -96,6 +114,7 @@ class _GameScreenState extends State<GameScreen> {
         timeText: _formatTime(_seconds),
         moves: _moves,
         difficulty: widget.difficulty,
+        isNewRecord: isRecord,
       ),
     );
 
