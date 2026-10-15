@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
 import 'data/settings_controller.dart';
-import 'screens/menu_screen.dart';
+import 'screens/splash_screen.dart';
 
 /// Widget raíz de la aplicación.
 /// Escucha al controlador de preferencias: cuando cambian,
@@ -22,7 +22,7 @@ class App extends StatelessWidget {
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
           themeMode: controller.settings.themeMode,
-          home: MenuScreen(controller: controller),
+          home: SplashScreen(controller: controller),
         );
       },
     );
