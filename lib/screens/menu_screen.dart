@@ -1,15 +1,22 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
+import '../data/scores_repository.dart';
 import '../data/settings_controller.dart';
 import 'game_screen.dart';
+import 'scores_screen.dart';
 import 'settings_screen.dart';
 
 /// Menú principal: desde aquí se llega a todas las demás pantallas.
 /// No guarda estado propio (lee del controlador), por eso es StatelessWidget.
 class MenuScreen extends StatelessWidget {
-  const MenuScreen({super.key, required this.controller});
+  const MenuScreen({
+    super.key,
+    required this.controller,
+    required this.scores,
+  });
 
   final SettingsController controller;
+  final ScoresRepository scores;
 
   /// Abre otra pantalla encima de esta. El botón "atrás" del AppBar
   /// de la nueva pantalla aparece solo y regresa al menú.
@@ -55,13 +62,16 @@ class MenuScreen extends StatelessWidget {
             primary: true,
             onPressed: () => _open(
               context,
-              GameScreen(size: controller.settings.difficulty.size),
+              GameScreen(
+                difficulty: controller.settings.difficulty,
+                scores: scores,
+              ),
             ),
           ),
           _MenuButton(
             icon: Icons.emoji_events,
             label: 'Marcadores',
-            onPressed: () => _comingSoon(context),
+            onPressed: () => _open(context, ScoresScreen(scores: scores)),
           ),
           _MenuButton(
             icon: Icons.settings,

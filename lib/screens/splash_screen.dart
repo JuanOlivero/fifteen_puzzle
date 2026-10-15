@@ -2,16 +2,21 @@ import 'dart:async';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import '../data/settings_controller.dart';
+import '../data/scores_repository.dart';
 import 'menu_screen.dart';
 
 /// Pantalla de carga: muestra el título con una animación de entrada
 /// y pasa sola al menú a los 3 segundos, o antes si se pulsa "Saltar".
 /// Es StatefulWidget porque maneja un temporizador.
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key, required this.controller});
+ const SplashScreen({
+    super.key,
+    required this.controller,
+    required this.scores,
+  });
 
   final SettingsController controller;
-
+  final ScoresRepository scores;
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
@@ -42,9 +47,12 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // pushReplacement reemplaza el splash por el menú, así el botón
     // "atrás" no puede volver a la pantalla de carga.
-    Navigator.of(context).pushReplacement(
+        Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => MenuScreen(controller: widget.controller),
+        builder: (_) => MenuScreen(
+          controller: widget.controller,
+          scores: widget.scores,
+        ),
       ),
     );
   }
