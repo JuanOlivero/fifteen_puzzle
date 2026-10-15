@@ -1,15 +1,17 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../data/app_settings.dart';
 import '../logic/puzzle_logic.dart';
+import '../widgets/game_over_dialog.dart';
 import '../widgets/puzzle_board.dart';
 
 /// Pantalla de la partida. Guarda el estado que cambia mientras se juega:
 /// el tablero, los movimientos y el tiempo. Por eso es un StatefulWidget.
 class GameScreen extends StatefulWidget {
-  const GameScreen({super.key, this.size = 4});
+  const GameScreen({super.key, this.difficulty = Difficulty.medium});
 
-  /// Tamaño del tablero: 3 (fácil), 4 (medio) o 5 (difícil).
-  final int size;
+  /// Dificultad elegida: define el tamaño del tablero y el límite de movimientos.
+  final Difficulty difficulty;
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -19,7 +21,11 @@ class _GameScreenState extends State<GameScreen> {
   late List<int> _tiles;
   int _moves = 0;
   int _seconds = 0;
+  bool _finished = false;
   Timer? _timer;
+
+  int get _size => widget.difficulty.size;
+  int get _maxMoves => widget.difficulty.maxMoves;
 
   @override
   void initState() {
@@ -39,16 +45,20 @@ class _GameScreenState extends State<GameScreen> {
   void _startNewGame() {
     _timer?.cancel();
     setState(() {
-      _tiles = PuzzleLogic.generateShuffled(widget.size);
+      _tiles = PuzzleLogic.generateShuffled(_size);
       _moves = 0;
       _seconds = 0;
+      _finished = false;
     });
   }
 
   /// Se ejecuta cuando el usuario toca una pieza.
   void _onTileTap(int index) {
+    // Con la partida terminada, el tablero ya no responde.
+    if (_finished) return;
+
     // La lógica decide si el movimiento es válido (null = no válido).
-    final newTiles = PuzzleLogic.moveTile(_tiles, widget.size, index);
+    final newTiles = PuzzleLogic.moveTile(_tiles, _size, index);
     if (newTiles == null) return;
 
     // El cronómetro arranca con el primer movimiento.
@@ -59,7 +69,11 @@ class _GameScreenState extends State<GameScreen> {
       _moves++;
     });
 
-    if (PuzzleLogic.isSolved(_tiles)) _onWin();
+    if (PuzzleLogic.isSolved(_tiles)) {
+      _finish(won: true);
+    } else if (_moves >= _maxMoves) {
+      _finish(won: false);
+    }
   }
 
   void _startTimer() {
@@ -68,27 +82,32 @@ class _GameScreenState extends State<GameScreen> {
     });
   }
 
-  void _onWin() {
+  /// Termina la partida: detiene el cronómetro, muestra el resultado
+  /// y actúa según lo que elija el usuario.
+  Future<void> _finish({required bool won}) async {
     _timer?.cancel();
-    // Diálogo provisional: más adelante lo reemplazamos por la pantalla
-    // de fin de partida completa.
-    showDialog(
+    setState(() => _finished = true);
+
+    final action = await showDialog<GameOverAction>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        title: const Text('¡Ganaste!'),
-        content: Text('Tiempo: ${_formatTime(_seconds)}\nMovimientos: $_moves'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _startNewGame();
-            },
-            child: const Text('Jugar otra vez'),
-          ),
-        ],
+      builder: (_) => GameOverDialog(
+        won: won,
+        timeText: _formatTime(_seconds),
+        moves: _moves,
+        difficulty: widget.difficulty,
       ),
     );
+
+    // Si el usuario salió de la pantalla mientras tanto, no hacemos nada.
+    if (!mounted) return;
+
+    if (action == GameOverAction.restart) {
+      _startNewGame();
+    } else {
+      // Volver al menú principal.
+      Navigator.of(context).pop();
+    }
   }
 
   /// Convierte segundos a formato mm:ss (ej. 75 -> "01:15").
@@ -98,8 +117,12 @@ class _GameScreenState extends State<GameScreen> {
     return '$m:$s';
   }
 
-    @override
+  @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    // Aviso visual: los movimientos se ponen en rojo cuando quedan pocos.
+    final almostOut = _maxMoves - _moves <= 10;
+
     return Scaffold(
       appBar: AppBar(title: const Text('15-Puzzle')),
       body: SafeArea(
@@ -119,14 +142,20 @@ class _GameScreenState extends State<GameScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         _StatCard(
-                            label: 'Tiempo', value: _formatTime(_seconds)),
-                        _StatCard(label: 'Movimientos', value: '$_moves'),
+                          label: 'Tiempo',
+                          value: _formatTime(_seconds),
+                        ),
+                        _StatCard(
+                          label: 'Movimientos',
+                          value: '$_moves / $_maxMoves',
+                          color: almostOut ? scheme.error : null,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 24),
                     PuzzleBoard(
                       tiles: _tiles,
-                      size: widget.size,
+                      size: _size,
                       onTileTap: _onTileTap,
                     ),
                     const SizedBox(height: 24),
@@ -145,13 +174,17 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 }
+
 /// Tarjeta pequeña para mostrar un dato (tiempo o movimientos).
 /// No tiene estado, solo recibe y muestra.
 class _StatCard extends StatelessWidget {
-  const _StatCard({required this.label, required this.value});
+  const _StatCard({required this.label, required this.value, this.color});
 
   final String label;
   final String value;
+
+  /// Color opcional para destacar el valor.
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -160,7 +193,10 @@ class _StatCard extends StatelessWidget {
       children: [
         Text(label, style: textTheme.labelLarge),
         const SizedBox(height: 4),
-        Text(value, style: textTheme.headlineMedium),
+        Text(
+          value,
+          style: textTheme.headlineMedium?.copyWith(color: color),
+        ),
       ],
     );
   }

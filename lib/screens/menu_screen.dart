@@ -55,7 +55,7 @@ class MenuScreen extends StatelessWidget {
             primary: true,
             onPressed: () => _open(
               context,
-              GameScreen(size: controller.settings.difficulty.size),
+              GameScreen(difficulty: controller.settings.difficulty),
             ),
           ),
           _MenuButton(
