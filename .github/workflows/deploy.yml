@@ -1,0 +1,63 @@
+name: Desplegar web
+
+# Se ejecuta cada vez que se actualiza la rama main
+# (o manualmente desde la pestaña Actions).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Instalar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      - name: Ejecutar tests
+        run: flutter test
+
+      - name: Compilar versión web
+        run: flutter build web --release --base-href "/fifteen_puzzle/"
+
+      - name: Verificar que sigue siendo una PWA
+        run: |
+          test -f build/web/index.html
+          test -f build/web/manifest.json
+          grep -q '"name"' build/web/manifest.json
+          grep -q '"icons"' build/web/manifest.json
+          ls build/web/icons
+
+      - name: Preparar archivos para Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar en GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
