@@ -64,6 +64,7 @@ class MenuScreen extends StatelessWidget {
               context,
               GameScreen(
                 difficulty: controller.settings.difficulty,
+                tileStyle: controller.settings.tileStyle,
                 scores: scores,
               ),
             ),
