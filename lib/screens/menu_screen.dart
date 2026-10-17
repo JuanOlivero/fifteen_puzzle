@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/scores_repository.dart';
 import '../data/settings_controller.dart';
 import 'game_screen.dart';
+import 'instructions_screen.dart';
 import 'scores_screen.dart';
 import 'settings_screen.dart';
 
@@ -22,13 +23,6 @@ class MenuScreen extends StatelessWidget {
   /// de la nueva pantalla aparece solo y regresa al menú.
   void _open(BuildContext context, Widget screen) {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
-  }
-
-  /// Aviso temporal para las pantallas que aún no están hechas.
-  void _comingSoon(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Próximamente')),
-    );
   }
 
   /// Aplica la animación de entrada solo si el usuario no la desactivó.
@@ -83,7 +77,7 @@ class MenuScreen extends StatelessWidget {
           _MenuButton(
             icon: Icons.help_outline,
             label: 'Cómo jugar',
-            onPressed: () => _comingSoon(context),
+            onPressed: () => _open(context, const InstructionsScreen()),
           ),
         ];
 
