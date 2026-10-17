@@ -13,6 +13,7 @@ class GameScreen extends StatefulWidget {
     super.key,
     this.difficulty = Difficulty.medium,
     required this.scores,
+    this.tileStyle = TileStyle.classic,
   });
 
   /// Dificultad elegida: define el tamaño del tablero y el límite de movimientos.
@@ -20,6 +21,8 @@ class GameScreen extends StatefulWidget {
 
   /// Donde se guardan los récords de las victorias.
   final ScoresRepository scores;
+  // Estilo visual de las piezas, elegido en Configuración.
+  final TileStyle tileStyle;
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -173,8 +176,9 @@ class _GameScreenState extends State<GameScreen> {
                     ),
                     const SizedBox(height: 24),
                     PuzzleBoard(
-                      tiles: _tiles,
+                     tiles: _tiles,
                       size: _size,
+                      style: widget.tileStyle,
                       onTileTap: _onTileTap,
                     ),
                     const SizedBox(height: 24),
